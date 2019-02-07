@@ -1,0 +1,32 @@
+//CRYRING optics (Qx=2.42, Qy=2.42, L.QD=0.289m)
+
+kqfl := 0.5086546699;
+kqdl := -0.6511149282;
+
+ksd := 0;
+ksf := 0;
+
+kkhec1 = 0;
+kkhec2 = 0;
+
+k02kh	:=	0	;
+k02kv	:=	0	;
+
+k03kh1	:=	0	;
+k03kh2	:=	0	;
+
+k04kh	:=	0	;
+k04kv	:=	0	;
+
+k06kh	:=	0	;
+
+k07kv	:=	0	;
+
+k08kh	:=	0	;
+k08kv	:=	0	;
+
+k10kh	:=	0	;
+k10kv	:=	0	;
+
+k12kh	:=	0	;
+k12kv	:=	0	;

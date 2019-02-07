@@ -1,0 +1,8 @@
+
+
+select,flag=twiss,clear;
+select,flag=twiss,column=name,keyword,s,L,alfx,alfy,betx,bety,dx,dpx,mux,muy,angle,k1l;
+twiss, file=twiss.txt;
+  
+setplot,post=2,ascale=1.5, lscale=1.5,rscale=1.5, sscale=1.5, lwidth=5;
+PLOT, HAXIS=S,VAXIS1=BETX,VAXIS2=BETY,VAXIS3=DX,interpolate=true,colour=100;

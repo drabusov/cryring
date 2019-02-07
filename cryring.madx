@@ -1,0 +1,38 @@
+// 07.02.2019
+
+// sequence initialization
+CALL, FILE = "Optics_v7.str";
+CALL, FILE = "CRYRING_v7.1.0.seq";
+
+//-----------------------------------------------------------------------------------------
+
+beam;
+use, sequence = cryring;
+SELECT, FLAG=makethin, FULL, THICK=true,slice=10;
+MAKETHIN, SEQUENCE=cryring, MAKEDIPEDGE = TRUE;
+
+// plot twiss parameters
+beam;
+use, sequence = cryring;
+CALL, FILE = "twiss.str";
+
+//-----------------------------------------------------------------------------------------
+
+track, onepass=true, onetable = true, file = "record.txt";
+
+start, x=0.001,px=0.0001,y=0.001,py=0.0001;
+
+   OBSERVE, PLACE=YR02DX1;
+   OBSERVE, PLACE=YR03DX1;
+   OBSERVE, PLACE=YR06DX1;
+   OBSERVE, PLACE=YR07DX1;
+   OBSERVE, PLACE=YR08DX1;
+   OBSERVE, PLACE=YR10DX1;
+   OBSERVE, PLACE=YR11DX1;
+   OBSERVE, PLACE=YR12DX1;
+
+
+run, turns=500; 
+endtrack;
+
+//RETURN;
