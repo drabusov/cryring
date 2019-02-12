@@ -6,8 +6,6 @@ import numpy as np
 import random
 from numpy.fft import rfft
 
-from scipy.interpolate import interp1d
-
 #---------------------------------------------PLOTTING-SETTINGS--------------------------------------
 rc('text', usetex=False)
 rc('font', serif ='Times')
@@ -35,60 +33,71 @@ def save(name=''):
     os.chdir(pwd)
 #----------------------------------------------------------------------------------------------------
 
+twiss = open('twiss.txt')  # That file updates every time of madx running
+twist = open('twiss_true.txt') # That file is used for beta-beating task
 
+ft1 = open('for_turns.txt')  # first working point (first_wp or fwp) 
+ft2 = open('for_turns2.txt') # second working point (second_wp or swp)
 
+noi = open('noise.txt')
 
-SP2 = 48
+fn1 = open('for_noise1.txt') # fwp, ampl = 2
+fn2 = open('for_noise2.txt') # swp, ampl = 2
+fn12 = open('for_noise12.txt') # fwp, ampl = 4
+fn22 = open('for_noise22.txt') # swp, ampl = 4
 
+svar= list()
+svar2= list()
+betamod = list() # twiss !!
+betabpm = list()
+betamod2 = list()
+betabpm2 = list() # twiss_true (IDEAL, for beta-beating)
 
-def read_twiss(filename, header):
-    
-    twiss = open(filename)  # This file updates every time of madx running
+phasebpm = list() # creates by twiss !!
+phasemod = list()
+phasebpm2 = list()
+phasemod2 = list() # FOR IDEAL (First workink point)! creates by twiss_true 
+sbpm = list()
+SP2 = 47
+i=0    
 
-    s, sbpm, beta, betabpm, phasebpm = list(), list(), list(), list(), list()
+for line in twiss:
+    i=i+1
+    line=line.strip()
+    line=line.split()
+    if line[1] == 'Q1':
+        Q1 = line[3]
+    if i > SP2:
+        svar.append(float(line[2]))
+        betamod.append(float(line[6]))
+        if line[0][1:4] == 'BPM':
+            dr = float(line[2]) - svar[i-SP2-3]
+            sbpm.append(float(line[2]))
+            betabpm.append(float(line[6]))
+            phasebpm.append(2*np.pi*float(line[10]))
 
-    for i,line in enumerate(twiss):
-        line=line.strip()
-        line=line.split()
-        if line[1] == 'Q1':
-            tune = float(line[3])
-        if i > header:
-            s.append(float(line[2]))
-            beta.append(float(line[6])) 
-            if 'DX1' in line[0]:
-                sbpm.append(float(line[2]))
-                betabpm.append(float(line[6]))
-                phasebpm.append(2*np.pi*float(line[10]))
-# what?           dr = float(line[2]) - svar[i-SP2-3]
+i=0
+for line in twist:
+    i=i+1
+    line=line.strip()
+    line=line.split()
+    if line[1] == 'Q1':
+        Qd1 = line[3]
+    if i > SP2:
+        svar2.append(float(line[2]))
+        betamod2.append(float(line[6]))
+        if line[0][1:4] == 'BPM':
+            betabpm2.append(float(line[6]))
+            phasebpm2.append(2*np.pi*float(line[10]))
 
-    print(i)
-    twiss.close()
-    return tune, s, sbpm, beta, betabpm, phasebpm
+twiss.close()
+twist.close()
 
-Q1, svar, sbpm, betamod, betabpm, phasebpm = read_twiss('twiss.txt',SP2)
+f = open('recordone')
 
-
-ss = [svar[0]]
-bb = [betamod[0]]
-
-i = 1
-while i < len(svar):
-    if svar[i] !=svar[i-1]:
-        ss.append(svar[i])
-        bb.append(betamod[i])
-    i+=1
-
-
-s_inter = np.linspace(svar[0], svar[-1], len(svar)*2)
-inter = interp1d(ss, bb, 'cubic')
-beta_inter = inter(s_inter)
-plt.scatter(svar,betamod, s = 10)
-plt.plot(s_inter,beta_inter)
-
-print('horizontal tune (from TWISS) is {}'.format(Q1))
-
-
-
+line = list()
+x = list()
+z= list()
 dr = list()
 
 phase = list()
@@ -150,78 +159,56 @@ for line in fn22:
 #-----------------------------------------------------------------------------------------------
 
 #-----------------------------------TRACK-READING-----------------------------------------------
-f = open('record.txtone')
 
-M = len(betabpm)           # Number of BPMs
-SP = 54          # lines without info of track in trackone file 
+M = 84           # Number of BPMs
+SP = 55          # lines without info of track in trackone file 
 
 i=0
 k=0
 
-x,y = list(),list()
-for i,line in enumerate(f):
-    if i > SP and i%2!=1:
+for line in f:
+    i=i+1
+    if i > SP and i%2!=0:
         k = k+1
         if k%(M+1) != 0:
             line=line.strip()
             line=line.split()
-            x.append(float(line[2]))
-            y.append(float(line[4]))
+            x.append(1000*float(line[2]))
+            z.append(1000*float(line[4]))
 
+N = k/(M+1)
+A = max(x)
 
-N = k//(M+1) # Number of turns
-A = max(x) # Amplitude. If the orbit is zero
-print('Number of turns = {}, number of BPMs = {}'.format(N,M))
-
-phasemod = list()
 for i in range(1,M):
     phasemod.append(phasebpm[i]-phasebpm[i-1])
-#    phasemod2.append(phasebpm2[i]-phasebpm2[i-1])
+    phasemod2.append(phasebpm2[i]-phasebpm2[i-1])
 
 x = np.reshape(x, (N,M))
 m = np.transpose(x)
 
-y = np.reshape(y, (N,M))
-my = np.transpose(y)          # For FFT (cheking vertical tune)
+z = np.reshape(z, (N,M))
+mz = np.transpose(z)          # For FFT (cheking vertical tune)
 
 #--------------------------------------SINGLE-RUN-------------------------------------------
 
-#noise = list()
-#for i in range(0,N*M):
-#    noise.append(random.uniform(-1,1))
+noise = list()
 
-#noise = np.reshape(noise,(M,N))
+for i in range(0,N*M):
+    noise.append(random.uniform(-1,1))
 
-#m2 = range(M)
+noise = np.reshape(noise,(M,N))
 
-#m1 = m + 0.1*noise               # noise = 100*10^-6 meters
+m2 = range(M)
+m1 = m + 0.1*noise               # noise = 100*10^-6 meters
+for i in range(0,M):
+    m1[i] = m1[i]-np.mean(m1[i]) 
+    m2[i] = m1[i][0:200]         # Cut the length of beam history (200 turns)
+#    m4[i] = np.sqrt(betabpm2[i])*m4[i]
 
-
-m1 = [x-np.mean(x) for x in m]
-
-#for i in range(M):
-#    m1[i] = m1[i]-np.mean(m1[i]) 
-#    m2[i] = m1[i][0:200]         # Cut the length of beam history (200 turns)
-
-
-U, s, V = np.linalg.svd(np.transpose(m1), full_matrices=True)
-
-u1 = np.transpose(U)
-
-fig, axs = plt.subplots(2, 2)
-fig.subplots_adjust(hspace=0.4,wspace = 0.3)
-axs[0,0].plot(u1[0])
-axs[0,1].plot(u1[1])
-axs[1,0].plot(u1[2])
-axs[1,1].plot(u1[3])
-axs[0,0].set_title('first mode (cos)')
-axs[0,1].set_title('first mode (sin)')
-axs[1,0].set_title('second mode (cos)')
-axs[1,1].set_title('second mode (sin)')
-
+U, s, V = np.linalg.svd(np.transpose(m2), full_matrices=True)
 
 beta = pow(s[0],2)*(V[0]**2)+pow(s[1],2)*(V[1]**2)
-scale = betabpm[0]/beta[0]   # put the correct scaling factor by hand
+scale = betabpm[24]/beta[24]   # put the correct scaling factor by hand
 beta = beta*scale
 
 for i in range(0,M):
@@ -235,15 +222,16 @@ for k in range(1,M):
 
 
 #-------------------------------FFT--------------------------------------------------------------
-
+'''
 y = rfft(m[1])
-yz = rfft(my[1])
+yz = rfft(mz[1])
 p = np.argmax(y)
 py = np.argmax(yz)
 Q = np.linspace(0,0.5,len(y))
-print('FFT. horizontal tune is {} OR {}'.format(Q[p],1-Q[p]))
-print('FFT. vertical tune is {} OR {}'.format(Q[py],1-Q[py]))        # tune and mirrored tune
-
+print('horizontal tune is '+repr(Q[p])+'\n'+'vertical tune is '+repr(Q[py]))
+print('OR')
+print('horizontal tune is '+repr(1-Q[p])+'\n'+'vertical tune is '+repr(1-Q[py]))        # Mirror
+'''
 #------------------------------------------------------------------------------------------------
 
 #-----------------------------------NOISE-OF-BPM-------------------------------------------------
@@ -340,7 +328,7 @@ for P in per:
 #----------------------------------PLOTTING-PART----------------------------------------------------
 
 #-------------------------------PLOT---------BETA---------------------------------------------------
-'''
+
 fig = plt.figure()
 
 gr6 = plt.scatter(sbpm,betabpm2,color='b',label = r'Ideal $\beta$-function (MADX)')#r'MADX $\beta$-function')
@@ -350,9 +338,9 @@ text1 = plt.text(100,21.5,r'$\nu_x = 18.84$'+'\n'+r'$\nu_y = 18.73$'+'\n'+r'$\De
 text2 = plt.text(30.6,38,'correct scaling factor = %.3f'%scale+'\n'+'gradient error = 5%, 8 quads')
 
 plt.grid(True)
-#axes = plt.gca()
-#axes.set_xlim([-15,1100])
-#axes.set_ylim([8,45])
+axes = plt.gca()
+axes.set_xlim([-15,1100])
+axes.set_ylim([8,45])
 plt.legend(loc='upper right',frameon=True)
 
 plt.title(r'$\beta$-function at BPMs of SIS100')
@@ -360,26 +348,25 @@ plt.xlabel('s, m')
 plt.ylabel(r'$\beta$, m')
 
 #save(name='beta')
-'''
+
 #------------------------------PLOT-----SECTOR------------------------------------------------------------------
 
 fig = plt.figure()
 
-plt.plot(svar,betamod,color = 'black',label = r'Ideal $\beta$ (MADX)')
-#plt.plot(svar,betamod, color = 'g', ls ='--', label =r'Distorted $\beta$ (MADX)') #label = r'MADX $\beta$-function')#
-#gr6 = plt.scatter(sbpm,betabpm2,color='b',label = r'Ideal on BPMs')
+gr1 = plt.plot(svar2,betamod2,color = 'black',label = r'Ideal $\beta$ (MADX)')
+gr1 = plt.plot(svar,betamod, color = 'g', ls ='--', label =r'Distorted $\beta$ (MADX)') #label = r'MADX $\beta$-function')#
+gr6 = plt.scatter(sbpm,betabpm2,color='b',label = r'Ideal on BPMs')
 gr6 = plt.scatter(sbpm,betabpm,color='g',s=50, marker = '^',label = r'MADX $\beta$ at BPMs' )#,label = r'Distorted on BPMs')
 gr5 = plt.scatter(sbpm,beta,color='r',marker = 'x', s=95, label = r'MIA $\beta$-function')
+plt.text(180.6*2+5,37,'8 quadrupoles: 5% error of gradient')
+text2 = plt.text(180.6*2+5,35,'incorrect scaling factor = %.3f'%scale)
 
-#plt.text(180.6*2+5,37,'8 quadrupoles: 5% error of gradient')
-#text2 = plt.text(180.6*2+5,35,'incorrect scaling factor = %.3f'%scale)
-
-#text1 = plt.text(180.6*2+15,23,r'$\nu_x = 18.84$'+'\n'+r'$\nu_y = 18.73$'+'\n'+r'$\Delta x/A = 0.05$')
+text1 = plt.text(180.6*2+15,23,r'$\nu_x = 18.84$'+'\n'+r'$\nu_y = 18.73$'+'\n'+r'$\Delta x/A = 0.05$')
 
 plt.grid(True)
 axes = plt.gca()
-axes.set_xlim([svar[0],svar[-1]])
-axes.set_ylim([min(betamod) - max(betamod)/15,max(betamod)+max(betamod)/2])
+axes.set_xlim([-1.+180.6*2,180.6+180.6*2])
+axes.set_ylim([2,39.5])
 plt.legend(loc='upper right',frameon=True)
 
 plt.title(r'$\beta$-function (one sector)')
@@ -529,5 +516,11 @@ plt.ylabel(r'$\delta$, %')
 plt.show()
 #----------------------------------------------------------------------------------------------------------
 
+fn1.close()
+fn2.close()
+fn12.close()
+fn22.close()
 
+ft1.close()
+ft2.close()
 f.close()
