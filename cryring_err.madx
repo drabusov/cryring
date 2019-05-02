@@ -1,0 +1,105 @@
+// 07.02.2019
+
+// sequence initialization
+CALL, FILE = "Optics_v7.str";
+CALL, FILE = "CRYRING_v7.1.0.seq";
+
+
+//-----------------------------------------------------------------------------------------
+
+beam;
+use, sequence = cryring;
+SELECT, FLAG=makethin, FULL, THICK=true,slice=6;
+MAKETHIN, SEQUENCE=cryring, MAKEDIPEDGE = TRUE;
+
+
+// rematch after makethin
+
+beam;
+use, sequence = cryring;
+
+match,sequence=cryring;
+VARY,NAME=kqfl,STEP=0.0001;
+VARY,NAME=kqdl,STEP=0.0001;
+GLOBAL,sequence=cryring,Q1=2.42,Q2=2.42;
+LMDIF,CALLS=2000,TOLERANCE=1.0E-8;
+endmatch;
+
+//========================================== ERR ==========================================
+//-----------------------------------------------------------------------------------------
+addquaderr(numerr,quadname): macro = {
+SELECT, FLAG=error, clear;
+eoption, seed=2, add=false;
+SELECT, FLAG=error, PATTERN="quadname";
+EFCOMP, radius:=0.01, order:=1, DKNR:={ 0, TGAUSS(2.5)*numerr, 0};
+
+};
+
+//exec, addquaderr(5.0E-3,QD1D..1);
+//exec, addquaderr(5.0E-3,QD1D..2);
+//exec, addquaderr(5.0E-3,QD1D..3);
+//exec, addquaderr(5.0E-3,QD1D..4);
+//exec, addquaderr(5.0E-3,QD1D..5);
+//exec, addquaderr(5.0E-3,QD1F..1);
+//exec, addquaderr(5.0E-3,QD1F..2);
+//exec, addquaderr(5.0E-3,QD1F..3);
+//exec, addquaderr(5.0E-3,QD1F..4);
+//exec, addquaderr(5.0E-3,QD1F..5);
+//-----------------------------------------------------------------------------------------
+
+addsxerr(numerr_x,numerr_y,sxname): macro = {
+SELECT, FLAG=error, clear;
+eoption, seed=2, add=false;
+SELECT, FLAG=error, PATTERN="sxname";
+EALIGN, DX = numerr_x+0.007, DY = numerr_y;
+
+};
+
+dx1 = -0.003;
+dx2 = -0.002;
+dx3 = 0.008;
+dx4 = 0.002;
+dx5 = -0.002;
+dx6 = 0.0001;
+
+
+dy1 = 0.0025;
+dy2 = 0.0005;
+dy3 = 0.0017;
+dy4 = 0.0005;
+dy5 = 0.003;
+dy6 = 0.002;
+
+
+exec, addsxerr(dx1,dy1, YR02KS1..*);
+exec, addsxerr(dx1,dy1,YR02KS2..*);
+exec, addsxerr(dx2,dy2,YR04KS1..*);
+exec, addsxerr(dx2,dy2,YR04KS2..*);
+
+exec, addsxerr(dx3,dy3,YR06KS1..*);
+exec, addsxerr(dx3,dy3,YR06KS2..*);
+exec, addsxerr(dx4,dy4,YR08QS2..*);
+exec, addsxerr(dx4,dy4,YR08KS2..*);
+
+exec, addsxerr(dx5,dy5,YR10KS1..*);
+exec, addsxerr(dx5,dy5,YR10KS2..*);
+
+exec, addsxerr(dx6,dy6,YR12KS1..*);
+exec, addsxerr(dx6,dy6,YR12KS2..*);
+
+SELECT, FLAG = ERROR, FULL;
+ESAVE, FILE = err.txt;
+
+//========================================== ERR ==========================================
+select,flag=sectortable,column=name,pos,k1,k2,k3,k4,k5,k6,r11,r21,r31,r41,r51,r61,r12,r22,r32,r42,r52,r62,r13,r23,r33,r43,r53,r63,r14,r24,r34,r44,r54,r64,r15,r25,r35,r45,r55,r65,r16,r26,r36,r46,r56,r66;
+select,flag=twiss,clear;
+select,flag=twiss,column=name,keyword,s,L,alfx,alfy,betx,bety,dx,dpx,mux,muy,k0l,k1l,k2l;
+
+twiss, chrom, sectormap, file=twiss.txt;
+twiss,sectormap,sectorfile=sectormap.txt;
+
+setplot,post=2,ascale=1.5, lscale=1.5,rscale=1.5, sscale=1.5, lwidth=5;
+PLOT, HAXIS=S,HMIN=0.0,HMAX=55,VAXIS1=BETX,VAXIS2=BETY,VAXIS3=X,VAXIS4=Y,interpolate=true,colour=100;
+
+
+//RETURN;
