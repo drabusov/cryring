@@ -1,0 +1,63 @@
+// 07.02.2019
+
+// sequence initialization
+CALL, FILE = "Optics_v7.str";
+//CALL, FILE = "optics.str";
+CALL, FILE = "CRYRING_v7.1.0.seq";
+
+//-----------------------------------------------------------------------------------------
+
+beam;
+use, sequence = cryring;
+SELECT, FLAG=makethin, FULL, THICK=true,slice=10;
+MAKETHIN, SEQUENCE=cryring, MAKEDIPEDGE = TRUE;
+
+
+
+
+//beam;
+beam,
+particle = "ion", mass = 24*0.9382720813, pc = 24*17E-3, CHARGE = 1, radiate = TRUE;
+//particle = "ion", mass = 24*0.9382720813, pc = 24*17E-3, CHARGE = 1, radiate = FALSE;
+
+use, sequence = cryring;
+
+beam;
+//EMIT, DELTAP=0.001;
+EMIT;
+SHOW, BEAM;
+
+
+//CALL, FILE = "twiss.str";
+
+//-----------------------------------------------------------------------------------------
+
+tr$macro(turn): macro={
+tune := 0.00187187;
+k02kh := 0.0001*SIN(2*3.14*tune*turn);
+kqfl := 0.5086546699 + 0.5086546699*SIN(2*3.14*tune*turn)/2000;
+kdfl := -0.6511149282 + 0.6511149282*SIN(2*3.14*tune*turn)/2000;
+};
+
+
+
+
+track, onepass=true, onetable = true, file = "record.txt", UPDATE = true;
+//track, onepass=true, onetable = true, file = "record.txt", UPDATE = false;
+
+start, x=0.001,px=0.0,y=0.0001,py=0.0001, t=-1.1, pt = 0.0;
+
+   OBSERVE, PLACE=YR02DX1;
+   OBSERVE, PLACE=YR03DX1;
+   OBSERVE, PLACE=YR06DX1;
+   OBSERVE, PLACE=YR07DX1;
+   OBSERVE, PLACE=YR08DX1;
+   OBSERVE, PLACE=YR10DX1;
+   OBSERVE, PLACE=YR11DX1;
+   OBSERVE, PLACE=YR12DX1;
+
+
+run, turns=2700; 
+endtrack;
+
+//RETURN;

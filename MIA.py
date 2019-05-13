@@ -13,8 +13,7 @@ rc('text', usetex=False)
 rc('font', serif ='Times')
 rc('font', size=16)
 rc('axes', linewidth=0.5)
-rc('lines', linewidth=1.15)
-rc('grid', c='0.5', ls='--', lw=0.5)	
+rc('lines', linewidth=1.15	)
 #rc('figure', figsize=(8.3,5.2))
 
 #rcParams['text.latex.preamble']=[r"\usepackage{lmodern}"]
@@ -52,9 +51,7 @@ def read_twiss(filename, header):
         line=line.strip()
         line=line.split()
         if line[1] == 'Q1':
-            tuneX = float(line[3])
-        if line[1] == 'Q2':
-            tuneY = float(line[3])
+            tune = float(line[3])
         if i > header:
             s.append(float(line[2]))
             beta.append(float(line[6])) 
@@ -66,29 +63,79 @@ def read_twiss(filename, header):
 
     print(i)
     twiss.close()
-    return tuneX, tuneY, s, sbpm, beta, betabpm, phasebpm
+    return tune, s, sbpm, beta, betabpm, phasebpm
 
-Q1, Q2, svar, sbpm, betamod, betabpm, phasebpm = read_twiss('twiss.txt',SP2)
+Q1, svar, sbpm, betamod, betabpm, phasebpm = read_twiss('twiss.txt',SP2)
+
+
+
+ss = [svar[0]]
+bb = [betamod[0]]
+i = 1
+while i < len(svar):
+    if svar[i] !=svar[i-1]:
+        ss.append(svar[i])
+        bb.append(betamod[i])
+    i+=1
 
 
 s_inter = np.linspace(svar[0], svar[-1], len(svar)*2)
-beta_inter = np.interp(s_inter, svar, betamod, period = 54.17782237/6.)
+inter = interp1d(ss, bb, 'cubic')
+beta_inter = inter(s_inter)
+
+#plt.figure()
+#plt.scatter(svar,betamod, s = 10)
+#plt.plot(s_inter,beta_inter)
 
 
-print('horizontal tune (from TWISS)  is {}'.format(Q1))
-print('vertical tune (from TWISS) is {}'.format(Q1))
+
+
+beta_spec = np.abs(rfft(beta_inter-np.mean(beta_inter)))
+qq = np.linspace(0,2/(s_inter[1]-s_inter[0]), len(s_inter))
+frq = qq[6]
+beta_sin = -2*beta_spec[6]/len(s_inter)*np.cos(2*np.pi*frq*s_inter) +np.mean(beta_inter)
+
+#fig, axs = plt.subplots(1, 2)
+#fig.subplots_adjust(hspace=0.4,wspace = 0.3)
+#axs[0].plot(s_inter,beta_inter)
+#axs[0].plot(s_inter,beta_sin)
+#axs[1].plot(beta_spec)
+#axs[1].grid(True)
+
+
+
+print('horizontal tune (from TWISS) is {}'.format(Q1))
+
+
+
+dr = list()
+
+phase = list()
+phase1 = list()
+
+phaserror = list()
+betaerror = list()
+
+phaserror2 = list()
+betaerror2 = list()
+
+phaserror12 = list()
+betaerror12 = list()
+
+phaserror22 = list()
+betaerror22 = list()
 
 
 #-----------------------------------TRACK-READING-----------------------------------------------
 f = open('record.txtone')
 
-M = len(betabpm)           # Number of BPMs
+M = len(betabpm)         # Number of BPMs
 SP = 54          # lines without info of track in trackone file 
 
 i=0
 k=0
 
-x,y = list(),list()
+x,y,tau,pt = list(),list(), list(), list()
 for i,line in enumerate(f):
     if i > SP and i%2!=1:
         k = k+1
@@ -97,6 +144,8 @@ for i,line in enumerate(f):
             line=line.split()
             x.append(float(line[2]))
             y.append(float(line[4]))
+            tau.append(float(line[6]))
+            pt.append(float(line[7]))
 
 
 N = k//(M+1) # Number of turns
@@ -113,6 +162,19 @@ m = np.transpose(x)
 
 y = np.reshape(y, (N,M))
 my = np.transpose(y)          # For FFT (cheking vertical tune)
+
+tau = np.reshape(tau, (N,M))
+mt = np.transpose(tau)          # For FFT (cheking vertical tune)
+
+pt = np.reshape(pt, (N,M))
+mp = np.transpose(pt)          # For FFT (cheking vertical tune)
+
+
+plt.figure()
+#plt.plot(mt[0]/max(mt[0]))
+plt.plot(mt[0])
+plt.plot(mp[0]/min(mp[0]))
+plt.grid(True)
 
 #--------------------------------------SINGLE-RUN-------------------------------------------
 
@@ -137,49 +199,37 @@ m1 = [x-np.mean(x) for x in m]
 U, s, V = np.linalg.svd(np.transpose(m1), full_matrices=True)
 
 u1 = np.transpose(U)
+mode = s[0]*u1[0]+s[1]*u1[1]
 
-#-------------------------------------------------------------------------------
-fig, axs = plt.subplots(3, 2)
-fig.subplots_adjust(hspace=0.4,wspace = 0.3)
-axs[0,0].plot(u1[0])
-axs[0,1].plot(u1[1])
-axs[1,0].plot(u1[2])
-axs[1,1].plot(u1[3])
-axs[2,0].plot(u1[4])
-axs[2,1].plot(u1[5])
-axs[0,0].set_title('first mode (cos)')
-axs[0,1].set_title('first mode (sin)')
-axs[1,0].set_title('second mode (cos)')
-axs[1,1].set_title('second mode (sin)')
+spec_mode = np.abs(rfft(mode))
+q = np.linspace(0,0.5,len(spec_mode))
 
-
-mode1 = s[0]*u1[0]+s[1]*u1[1]
-mode2 = s[2]*u1[2]+s[3]*u1[3]
-
-spec_mode1 = np.abs(np.fft.rfft(mode1))
-spec_mode2 = np.abs(np.fft.rfft(mode2))
-max1 = np.max(spec_mode1)
-max2 = np.max(spec_mode2)
-
-q = np.linspace(0,0.5,len(spec_mode1))
 
 plt.figure()
-plt.plot(q,spec_mode1, color = 'red', label = '1st mode, Ampl ={:g}'.format(max1))
-plt.plot(q,spec_mode2, color = 'blue', label = '2nd mode, Ampl ={:g}'.format(max2))
-
-plt.legend(loc='best',frameon=True)
-
+plt.plot(mode)
 plt.grid(True)
-plt.title('Spectrum of the temporal modes')
-#-------------------------------------------------------------------------------
+plt.xlabel("n, turn index")
+plt.title("Betatron eigenmode. MADX")
+#plt.savefig("mode_ripple.pdf")
 
 
+plt.figure()
+plt.plot(q,spec_mode)
+plt.xlim([0.41,0.43])
+plt.grid(True)
+plt.xlabel("tune")
+plt.title("Spectrum of betatron eigenmode. MADX")
+#plt.savefig("spec_mode_ripple.pdf")
+
+
+fig, axs = plt.subplots(4, 2)
+fig.subplots_adjust(hspace=0.4,wspace = 0.3)
+[axs[i//2,i%2].plot(x) for i,x in enumerate(m)]
 
 beta = pow(s[0],2)*(V[0]**2)+pow(s[1],2)*(V[1]**2)
 scale = betabpm[0]/beta[0]   # put the correct scaling factor by hand
 beta = beta*scale
 
-phase, phase1 = [],[]
 for i in range(0,M):
     phase.append(math.atan(s[1]*V[1][i]/(s[0]*V[0][i])))
 
@@ -199,14 +249,6 @@ py = np.argmax(yz)
 Q = np.linspace(0,0.5,len(y))
 print('FFT. horizontal tune is {} OR {}'.format(Q[p],1-Q[p]))
 print('FFT. vertical tune is {} OR {}'.format(Q[py],1-Q[py]))        # tune and mirrored tune
-
-#spec_signal = np.abs(np.fft.rfft(m1[1]))
-
-#plt.figure()
-#plt.plot(q,spec_signal, color = 'green')
-#plt.title('Fourier spectrum of the BPM signal')
-#plt.grid(True)
-
 
 #------------------------------------------------------------------------------------------------
 
@@ -329,9 +371,11 @@ plt.ylabel(r'$\beta$, m')
 
 fig = plt.figure()
 
-plt.plot(s_inter,beta_inter,color = 'black',label = r'Ideal $\beta$ (MADX)')
-plt.scatter(sbpm,betabpm,color='g',s=50, marker = '^',label = r'MADX $\beta$ at BPMs' )#,label = r'Distorted on BPMs')
-plt.scatter(sbpm,beta,color='r',marker = 'x', s=95, label = r'MIA $\beta$-function')
+plt.plot(svar,betamod,color = 'black',label = r'Ideal $\beta$ (MADX)')
+#plt.plot(svar,betamod, color = 'g', ls ='--', label =r'Distorted $\beta$ (MADX)') #label = r'MADX $\beta$-function')#
+#gr6 = plt.scatter(sbpm,betabpm2,color='b',label = r'Ideal on BPMs')
+gr6 = plt.scatter(sbpm,betabpm,color='g',s=50, marker = '^',label = r'MADX $\beta$ at BPMs' )#,label = r'Distorted on BPMs')
+gr5 = plt.scatter(sbpm,beta,color='r',marker = 'x', s=95, label = r'MIA $\beta$-function')
 
 #plt.text(180.6*2+5,37,'8 quadrupoles: 5% error of gradient')
 #text2 = plt.text(180.6*2+5,35,'incorrect scaling factor = %.3f'%scale)

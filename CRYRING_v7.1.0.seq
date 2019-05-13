@@ -24,6 +24,8 @@ MH: sbend,l:= 1.2*PI/6,angle:= -PI/6, e1:= -PI/12,e2:= -PI/12,hgap:= 0.04,fint:=
 
 
 //Main quadrupoles
+
+//L.QD := lq;
 L.QD := 0.289;
 MQF: quadrupole,l:= L.QD,k1:=kqfl/L.QD,aperture:={ 0.05, 0.05},nst:= 7,apertype=ellipse;
 MQD: quadrupole,l:= L.QD,k1:=kqdl/L.QD,aperture:={ 0.05, 0.05},nst:= 7,apertype=ellipse;
@@ -37,6 +39,10 @@ MSF: sextupole,l:= L.SM,k2:=ksf,aperture:={ 0.05, 0.05},nst:= 7,apertype=ellipse
 L.CD := 0.19 ;
 KH: hkicker,l= L.CD,apertype=ellipse,aperture:={ 0.05, 0.05};
 KV: vkicker,l= L.CD,apertype=ellipse,aperture:={ 0.05, 0.05};
+
+//===============================
+CORR1: MULTIPOLE, KNL = {0,q,0};
+//===============================
 
 //KD: hkicker,l:= 0,apertype=ellipse,aperture:={ 0.05, 0.05};
 MKE: tkicker, l:= 0,  hkick : = k0nl_MKE;
@@ -57,6 +63,9 @@ LB2: hkicker,l:=0.3035 ,  kick:= k0nl_YR01LB2 ,apertype=rectangle,aperture:={ 0.
 LB3: hkicker,l:=0.3755 ,  kick:= k0nl_YR01LB3 ,apertype=rectangle,aperture:={ 0.048, 0.048};
 LB4: hkicker,l:=0.33245,  kick:= k0nl_YR01LB4 ,apertype=rectangle,aperture:={ 0.045, 0.045};	
 
+
+// RF Cavity
+CAVITY: RFCAVITY, VOLT=1.0, HARMON=18;
 
 P.0	:	OMK	;
 P.LP2end	:	OMK	;
@@ -156,6 +165,9 @@ cryring:	sequence,	l=	54.17782237	;
 P.0	,	at	=	0	;
 P.LP2end	,	at	=	0.3536	;
 YR01LB3	,	at	=	0.64505	;
+
+CAVITY	,	at	=	0.84505	;
+
 YR01LB4	,	at	=	1.081	;
 YR01DF3	,	at	=	1.696659265	;
 YR01MH	,	at	=	2.276659265	;
