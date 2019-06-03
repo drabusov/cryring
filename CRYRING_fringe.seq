@@ -1,0 +1,366 @@
+//CRYRING (coordinates of the element centers are taken from CRYRING_CO and from the drawings)
+//SBEND angle definition is changed to negative to describe the counter-clockwise rotating beam.
+//
+//13.02.2017: SBENDs have new definition in comparison with previous versions.
+//            
+//09.03.2017: Effective magnet lengths are taken from the TDR(v1.3, May 2011)
+//
+//05.05.2017: Effective length of QUADRUPOLES is taken 0.289m, as in the latest measurements.
+//			  LBs are added to the lattice
+//11.05.2017: Added YR01DF3
+//
+//03.09.2017: QUADRUPOLES redefined to give the strength as in Paramodi, in [1/m], in Optics_v7.str file
+//
+//18.09.2017: Added YR03DX1, YR03DX2, YR03DX3, YR03DX4
+//
+//13.12.2017: Corrected the positions of the YR03DX1, YR03DX2, YR03DX3, YR03DX4
+//
+//19.01.2018: The apertype of the vacuum chamber of the MH (sbend) is changed from ellipse to rectangle
+//
+
+//ELEMENT definitions
+//Main dipoles
+L.MH := 1.2*PI/6;
+MH: sbend,l:= L.MH,angle:= -PI/6, e1:= -PI/12,e2:= -PI/12,hgap:= 0.04,fint:= 0.56,aperture:={ 0.054, 0.027},nst:= 15,apertype=rectangle;
+
+
+//Main quadrupoles
+
+//L.QD := lq;
+L.QD := 0.289;
+MQF: quadrupole,l:= L.QD,k1:=kqfl/L.QD,aperture:={ 0.05, 0.05},nst:= 7,apertype=ellipse;
+MQD: quadrupole,l:= L.QD,k1:=kqdl/L.QD,aperture:={ 0.05, 0.05},nst:= 7,apertype=ellipse;
+
+//Sextupoles
+L.SM := 0.203 ;
+MSD: sextupole,l:= L.SM,k2:=ksd,aperture:={ 0.05, 0.05},nst:= 7,apertype=ellipse;
+MSF: sextupole,l:= L.SM,k2:=ksf,aperture:={ 0.05, 0.05},nst:= 7,apertype=ellipse;
+
+//Orbit correctors
+L.CD := 0.19 ;
+KH: hkicker,l= L.CD,apertype=ellipse,aperture:={ 0.05, 0.05};
+KV: vkicker,l= L.CD,apertype=ellipse,aperture:={ 0.05, 0.05};
+
+//===============================
+CORR1: MULTIPOLE, KNL = {0,q,0};
+//===============================
+
+//KD: hkicker,l:= 0,apertype=ellipse,aperture:={ 0.05, 0.05};
+MKE: tkicker, l:= 0,  hkick : = k0nl_MKE;
+
+//BPMs
+HBPM: hmonitor,l:= 0.1,apertype=ellipse,aperture:={ 0.05, 0.05};		//length changed to 0.1m from 0.15m. What's the length??
+VBPM: vmonitor,l:= 0.1,apertype=ellipse,aperture:={ 0.05, 0.05};
+
+//Instruments
+DK: instrument, l:=0; 
+
+//Markers
+OMK: marker;
+
+//Bumpers
+LB1: hkicker,l:=0.2965 ,  kick:= k0nl_YR01LB1 ,apertype=rectangle,aperture:={ 0.048, 0.048};
+LB2: hkicker,l:=0.3035 ,  kick:= k0nl_YR01LB2 ,apertype=rectangle,aperture:={ 0.048, 0.048};
+LB3: hkicker,l:=0.3755 ,  kick:= k0nl_YR01LB3 ,apertype=rectangle,aperture:={ 0.048, 0.048};
+LB4: hkicker,l:=0.33245,  kick:= k0nl_YR01LB4 ,apertype=rectangle,aperture:={ 0.045, 0.045};	
+
+
+// Fringe multipoles for sbend
+//MH_Entrance: multipole, knl := {0,0,mhs,0}, ksl := {0,0,mhs_skew};
+//MH_Exit: multipole, knl := {0,0,mhs,0}, ksl := {0,0,mhs_skew};
+
+MH_Entrance: multipole, knl := {0,0,mhs,0};
+MH_Exit: multipole, knl := {0,0,mhs,0};
+
+// symmetry breaking element 
+SBE: multipole, knl :={0,0,sbes};
+
+
+P.0	:	OMK	;
+P.LP2end	:	OMK	;
+YR01LB3	:	LB3	;
+YR01LB4	:	LB4	;
+YR01DF3	:	DK	;
+
+YR01MH1	:	MH_Entrance	;
+YR01MH2	:	MH	;			
+YR01MH3	:	MH_Exit	;
+						
+YR02QS1	:	MQF	;			
+YR02DX1	:	HBPM	;			
+YR02KH	:	KH	,	kick:=	k02kh	;
+YR02KV	:	KV	,	kick:=	k02kv	;
+YR02DX2	:	VBPM	;			
+YR02QS2	:	MQD	;			
+YR02KS1	:	MSD	;			
+YR02QS3	:	MQF	;			
+YR02KS2	:	MSF	;			
+
+YR02MH1	:	MH_Entrance	;			
+YR02MH2	:	MH	;			
+YR02MH3	:	MH_Exit	;			
+
+YR03KH1	:	KH	,	kick:=	k03kh1	;
+YR03DX1 :   HBPM	;	
+YR03DX2 :   VBPM	;		
+YR03DX3 :   VBPM	;	
+YR03DX4 :   HBPM	;		   
+YR03KH2	:	KH	,	kick:=	k03kh2	;
+
+YR03MH1	:	MH_Entrance	;			
+YR03MH2	:	MH	;			
+YR03MH3	:	MH_Exit	;			
+
+YR04QS1	:	MQF	;			
+YR04KH	:	KH	,	kick:=	k04kh	;
+YR04QS2	:	MQD	;			
+YR04KS1	:	MSD	;			
+YR04KV	:	KV	,	kick:=	k04kv	;
+YR04QS3	:	MQF	;			
+YR04KS2	:	MSF	;			
+
+YR04MH1	:	MH_Entrance	;			
+YR04MH2	:	MH	;			
+YR04MH3	:	MH_Exit	;			
+
+YR04DX4 :   HBPM        ;			
+
+YR05MH1	:	MH_Entrance	;			
+YR05MH2	:	MH	;			
+YR05MH3	:	MH_Exit	;			
+
+YR06KH	:	KH	,	kick:=	k06kh	;
+YR06QS1	:	MQF	;			
+YR06DX1	:	HBPM	;			
+YR06MK1E	:	MKE	;			
+YR06DX2	:	VBPM	;			
+YR06QS2	:	MQD	;			
+YR06KS1	:	MSD	;			
+YR06QS3	:	MQF	;			
+YR06KS2	:	MSF	;			
+
+YR06MH1	:	MH_Entrance	;			
+YR06MH2	:	MH	;			
+YR06MH3	:	MH_Exit	;			
+
+YR07KV	:	KV	,	kick:=	k07kv	;
+YR07DK2	:	DK	;			
+YR07DX1	:	HBPM	;			
+YR07DX2	:	VBPM	;			
+
+YR07MH1	:	MH_Entrance	;			
+YR07MH2	:	MH	;			
+YR07MH3	:	MH_Exit	;			
+
+YR08DKP	:	DK	;			
+YR08QS1	:	MQF	;			
+YR08DX1	:	HBPM	;			
+YR08KH	:	KH	,	kick:=	k08kh	;
+YR08KV	:	KV	,	kick:=	k08kv	;
+YR08DX2	:	VBPM	;			
+YR08QS2	:	MQD	;			
+YR08KS1	:	MSD	;			
+YR08QS3	:	MQF	;			
+YR08KS2	:	MSF	;			
+
+YR08MH1	:	MH_Entrance	;			
+YR08MH2	:	MH	;			
+YR08MH3	:	MH_Exit	;			
+
+P.YR09front	:	OMK	;
+P.YR09centre	:	OMK	;
+P.YR09end	:	OMK	;
+
+YR09MH1	:	MH_Entrance	;			
+YR09MH2	:	MH	;			
+YR09MH3	:	MH_Exit	;			
+
+YR10QS1	:	MQF	;			
+YR10DX1	:	HBPM	;			
+YR10KH	:	KH	,	kick:=	k10kh	;
+YR10KV	:	KV	,	kick:=	k10kv	;
+YR10DX2	:	VBPM	;			
+YR10QS2	:	MQD	;			
+YR10KS1	:	MSD	;			
+YR10QS3	:	MQF	;			
+YR10KS2	:	MSF	;			
+
+YR10MH1	:	MH_Entrance	;			
+YR10MH2	:	MH	;			
+YR10MH3	:	MH_Exit	;			
+
+YR11DKP	:	DK	;			
+YR11DX1	:	HBPM	;			
+YR11DX2	:	VBPM	;			
+YR11DK3	:	DK	;			
+
+YR11MH1	:	MH_Entrance	;			
+YR11MH2	:	MH	;			
+YR11MH3	:	MH_Exit	;			
+
+YR12QS1	:	MQF	;			
+YR12DX1	:	HBPM	;			
+YR12KH	:	KH	,	kick:=	k12kh	;
+YR12KV	:	KV	,	kick:=	k12kv	;
+YR12DX2	:	VBPM	;			
+YR12QS2	:	MQD	;			
+YR12KS1	:	MSD	;			
+YR12QS3	:	MQF	;			
+YR12KS2	:	MSF	;			
+
+YR12MH1	:	MH_Entrance	;			
+YR12MH2	:	MH	;			
+YR12MH3	:	MH_Exit	;			
+
+YR01LB1	:	LB1	;
+YR01LB2	:	LB2	;
+P.END	:	OMK	;			
+
+
+cryring:	sequence,	l=	54.17782237	;
+
+P.0	,	at	=	0	;
+P.LP2end	,	at	=	0.3536	;
+YR01LB3	,	at	=	0.64505	;
+YR01LB4	,	at	=	1.081	;
+YR01DF3	,	at	=	1.696659265	;
+
+YR01MH1	,	at	=	2.276659265 - L.MH/2	;
+YR01MH2	,	at	=	2.276659265	;
+YR01MH3	,	at	=	2.276659265 + L.MH/2	;
+
+YR02QS1	,	at	=	3.340818531	;
+YR02DX1	,	at	=	3.557318531	;
+YR02KH	,	at	=	3.775818531	;
+YR02KV	,	at	=	4.079818531	;
+YR02DX2	,	at	=	4.298318531	;
+YR02QS2	,	at	=	4.514818531	;
+YR02KS1	,	at	=	4.814818531	;
+YR02QS3	,	at	=	5.688818531	;
+YR02KS2	,	at	=	5.988818531	;
+
+YR02MH1	,	at	=	6.752977796 - L.MH/2	;
+YR02MH2	,	at	=	6.752977796	;
+YR02MH3	,	at	=	6.752977796 + L.MH/2	;
+
+YR03KH1	,	at	=	7.362137061	;
+
+SBE, at = 8.01;
+
+YR03DX1 ,   at  =   8.6100 ;
+YR03DX2 ,   at  =   8.7100 ;
+YR03DX3 ,   at  =   9.3500 ;
+YR03DX4 ,   at  =   9.4500 ;
+YR03KH2	,	at	=	10.69613706	;
+
+YR03MH1	,	at	=	11.30629633 - L.MH/2	;
+YR03MH2	,	at	=	11.30629633	;
+YR03MH3	,	at	=	11.30629633 + L.MH/2	;
+
+YR04QS1	,	at	=	12.37045559	;
+YR04KH	,	at	=	12.74945653	;
+YR04QS2	,	at	=	13.54445559	;
+YR04KS1	,	at	=	13.84445559	;
+YR04KV	,	at	=	14.14791652	;
+YR04QS3	,	at	=	14.71845559	;
+YR04KS2	,	at	=	15.01845559	;
+
+YR04MH1	,	at	=	15.78261486 - L.MH/2	;
+YR04MH2	,	at	=	15.78261486	;
+YR04MH3	,	at	=	15.78261486 + L.MH/2	;
+
+YR04DX4 ,   at  =   18.0 ;
+
+YR05MH1	,	at	=	20.33593339 - L.MH/2	;
+YR05MH2	,	at	=	20.33593339	;
+YR05MH3	,	at	=	20.33593339 + L.MH/2	;
+
+YR06KH	,	at	=	21.10009265	;
+YR06QS1	,	at	=	21.40009265	;
+YR06DX1	,	at	=	21.61659265	;
+YR06MK1E	,	at	=	21.93144265	;
+YR06DX2	,	at	=	22.35759265	;
+YR06QS2	,	at	=	22.57409265	;
+YR06KS1	,	at	=	22.87409265	;
+YR06QS3	,	at	=	23.74809265	;
+YR06KS2	,	at	=	24.04809265	;
+
+YR06MH1	,	at	=	24.81225192 - L.MH/2	;
+YR06MH2	,	at	=	24.81225192	;
+YR06MH3	,	at	=	24.81225192 + L.MH/2	;
+
+YR07KV	,	at	=	25.99641118	;
+YR07DK2	,	at	=	27.40513726	;
+YR07DX1	,	at	=	28.20141118	;
+YR07DX2	,	at	=	28.35141118	;
+
+YR07MH1	,	at	=	29.36557045 - L.MH/2	;
+YR07MH2	,	at	=	29.36557045	;
+YR07MH3	,	at	=	29.36557045 + L.MH/2	;
+
+YR08DKP	,	at	=	30.07972974	;
+YR08QS1	,	at	=	30.42972972	;
+YR08DX1	,	at	=	30.64622972	;
+YR08KH	,	at	=	30.86472972	;
+YR08KV	,	at	=	31.16872972	;
+YR08DX2	,	at	=	31.38722972	;
+YR08QS2	,	at	=	31.60372972	;
+YR08KS1	,	at	=	31.90372972	;
+YR08QS3	,	at	=	32.77772972	;
+YR08KS2	,	at	=	33.07772972	;
+
+YR08MH1	,	at	=	33.84188898 - L.MH/2	;
+YR08MH2	,	at	=	33.84188898	;
+YR08MH3	,	at	=	33.84188898 + L.MH/2	;
+
+P.YR09front	,	at	=	34.98021861	;
+P.YR09centre	,	at	=	36.11854825	;
+P.YR09end	,	at	=	37.25687788	;
+
+YR09MH1	,	at	=	38.39520751 - L.MH/2	;
+YR09MH2	,	at	=	38.39520751	;
+YR09MH3	,	at	=	38.39520751 + L.MH/2	;
+
+YR10QS1	,	at	=	39.45936678	;
+YR10DX1	,	at	=	39.67586678	;
+YR10KH	,	at	=	39.89436678	;
+YR10KV	,	at	=	40.19836678	;
+YR10DX2	,	at	=	40.41686678	;
+YR10QS2	,	at	=	40.63336678	;
+YR10KS1	,	at	=	40.93336678	;
+YR10QS3	,	at	=	41.80736678	;
+YR10KS2	,	at	=	42.10736678	;
+
+YR10MH1	,	at	=	42.87152604 - L.MH/2	;
+YR10MH2	,	at	=	42.87152604	;
+YR10MH3	,	at	=	42.87152604 + L.MH/2	;
+
+YR11DKP	,	at	=	43.28848531	;
+YR11DX1	,	at	=	44.23318531	;
+YR11DX2	,	at	=	46.06318531	;
+YR11DK3	,	at	=	46.46628531	;
+
+YR11MH1	,	at	=	47.42484457 - L.MH/2	;
+YR11MH2	,	at	=	47.42484457	;
+YR11MH3	,	at	=	47.42484457 + L.MH/2	;
+
+YR12QS1	,	at	=	48.48900384	;
+YR12DX1	,	at	=	48.70550384	;
+YR12KH	,	at	=	48.92400384	;
+YR12KV	,	at	=	49.22800384	;
+YR12DX2	,	at	=	49.44650384	;
+YR12QS2	,	at	=	49.66300384	;
+YR12KS1	,	at	=	49.96300384	;
+YR12QS3	,	at	=	50.83700384	;
+YR12KS2	,	at	=	51.13700384	;
+
+YR12MH1	,	at	=	51.9011631 - L.MH/2	;
+YR12MH2	,	at	=	51.9011631	;
+YR12MH3	,	at	=	51.9011631 + L.MH/2	;
+
+YR01LB1	,	at	=	52.63762237	;
+YR01LB2	,	at	=	53.02262237	;
+P.END	,	at	=	54.17782237	;
+
+
+endsequence;				
