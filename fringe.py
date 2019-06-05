@@ -28,8 +28,8 @@ def read_twiss(filename, header):
 #----------------------------------------------------------------------------
 
 #corr = ['mhq','mhs', 'mqs', 'mqo']
-corr = ['mhs', 'ksmo3c']
-theta0 = [np.random.normal(0,0.001) for elem in corr] # vector of parameters to optimize, first point to start
+corr = ['mhs']
+theta0 = [np.random.normal(0,0.0001) for elem in corr] # vector of parameters to optimize, first point to start
 
 # 29.03
 measured_x =[0.0003309073729546661, 0.0002212738428333959, 0.00010740585805192146, 0.0002516754207025145, 0.0002681394558083527, 6.721085594107403e-05, 0.00032595340641084424]
@@ -55,18 +55,18 @@ def metric_counter(theta):
             line = line.rstrip(';\n')
             line = line.split(':=')
             if not line[0].strip('\t') in corr:
-                g.write('{} := {};\n'.format(line[0],line[1]))
+                g.write('{}:={};\n'.format(line[0],line[1]))
 
 
     for i,v in enumerate(theta):
-        g.write('{} := {};\n'.format(corr[i], v))
+        g.write('{}\t:={};\n'.format(corr[i], v))
 
 
     f.close()
     g.close()
 
 
-    os.system("./madx cryring.madx -> out.dat")
+    os.system("./madx cryring_fringe.madx -> out.dat")
 
     SP2 = 48 # header of twiss file
     betaxbpm, betaybpm = read_twiss('twiss.txt',SP2)
